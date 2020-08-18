@@ -7,8 +7,11 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = 
-        self.pc
+        self.RAM = [0x00] * 0xFF
+        self.PC = 0x00
+        self.reg = [0x00] * 0x08
+        self.fl = 0x00
+        self.branchtable = {}
 
     def load(self):
         """Load a program into memory."""
@@ -28,9 +31,14 @@ class CPU:
         ]
 
         for instruction in program:
-            self.ram[address] = instruction
+            self.RAM[address] = instruction
             address += 1
 
+    def ram_read(self, MAR):
+        return self.RAM[MAR]
+
+    def ram_write(self, MAR, MDR):
+        self.RAM[MAR] = MDR & 0xFF
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -48,12 +56,12 @@ class CPU:
         """
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
-            self.pc,
+            self.PC,
             #self.fl,
             #self.ie,
-            self.ram_read(self.pc),
-            self.ram_read(self.pc + 1),
-            self.ram_read(self.pc + 2)
+            self.ram_read(self.PC),
+            self.ram_read(self.PC + 1),
+            self.ram_read(self.PC + 2)
         ), end='')
 
         for i in range(8):
@@ -63,4 +71,32 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        while True:
+            self.IR = self.ram_read(self.PC)
+            operand_A = self.ram_read(self.PC + 1)
+            operand_B = self.ram_read(self.PC + 2)
+            if self.IR in self.branchtable:
+                op = self.branchtable[self.IR]
+                if self.IR & 0x80 >> 7:
+                    self.PC += 3
+                    self.alu(op, operand_A, operand_B)
+                elif self.IR & 0x40 >> 6:
+                    self.PC += 2
+                    self.alu(op, operand_A, 0x00)
+                else:
+                    self.PC += 1
+                    self.alu(op, 0x00, 0x00)
+            elif self.IR == 0x01:
+                break
+            elif self.IR == 0x82:
+                self.PC += 3
+                self.reg[operand_A] = operand_B
+            elif self.IR == 0x47:
+                self.PC += 2
+                print(self.reg[operand_A])
+
+            self.PC &= 0xFF
+if __name__ == "__main__":
+    cpu = CPU()
+    cpu.load()
+    cpu.run()
