@@ -11,24 +11,27 @@ class CPU:
         self.PC = 0x00
         self.reg = [0x00] * 0x08
         self.fl = 0x00
-        self.branchtable = {}
+        self.branchtable = {0xA2: "MUL"}
 
     def load(self):
         """Load a program into memory."""
 
         address = 0
-
+        with open(sys.argv[1], 'r') as f:
+            program = []
+            for line in f.read().split("\n"):
+                if line.strip() != "" and line.strip()[0] != "#":
+                    program.append(int(line.split(" ")[0], 2))
         # For now, we've just hardcoded a program:
-
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
         for instruction in program:
             self.RAM[address] = instruction
@@ -45,9 +48,13 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "SUB":
+            pass
+        elif op == "MUL":
+            self.reg[reg_a] *= self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
+        self.reg[reg_a] &= 0xFF
 
     def trace(self):
         """
@@ -77,16 +84,16 @@ class CPU:
             operand_B = self.ram_read(self.PC + 2)
             if self.IR in self.branchtable:
                 op = self.branchtable[self.IR]
-                if self.IR & 0x80 >> 7:
+                if (self.IR & 0x80) >> 7:
                     self.PC += 3
                     self.alu(op, operand_A, operand_B)
-                elif self.IR & 0x40 >> 6:
+                elif (self.IR & 0x40) >> 6:
                     self.PC += 2
                     self.alu(op, operand_A, 0x00)
                 else:
                     self.PC += 1
                     self.alu(op, 0x00, 0x00)
-            elif self.IR == 0x01:
+            elif self.IR == 0x01 or self.IR == 0x00:
                 break
             elif self.IR == 0x82:
                 self.PC += 3
