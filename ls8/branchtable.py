@@ -50,6 +50,9 @@ def INC(cpu, register):
     cpu.REG[register] += 1
     cpu.REG[register] &= 0xFF
 
+def NOT(cpu, register):
+    cpu.REG[register] = ~cpu.REG[register] & 0xFF
+
 def LDI(cpu, register, immediate):
     cpu.REG[register] = immediate
 
@@ -64,10 +67,15 @@ def ADD(cpu, registerA, registerB):
     cpu.REG[registerA] &= 0xFF
 
 def SUB(cpu, registerA, registerB):
-    pass
+    cpu.REG[registerA] -= cpu.REG[registerB]
+    cpu.REG[registerA] &= 0xFF
 
 def MUL(cpu, registerA, registerB):
     cpu.REG[registerA] *= cpu.REG[registerB]
+    cpu.REG[registerA] &= 0xFF
+
+def MOD(cpu, registerA, registerB):
+    cpu.REG[registerA] %= cpu.REG[registerB]
     cpu.REG[registerA] &= 0xFF
 
 def CMP(cpu, registerA, registerB):
@@ -76,9 +84,27 @@ def CMP(cpu, registerA, registerB):
     cpu.FL |= (cpu.REG[registerA] > cpu.REG[registerB]) * 0x02
     cpu.FL |= (cpu.REG[registerA] == cpu.REG[registerB]) * 0x01
 
+def AND(cpu, registerA, registerB):
+    cpu.REG[registerA] &= cpu.REG[registerB]
+
+def OR(cpu, registerA, registerB):
+    cpu.REG[registerA] |= cpu.REG[registerB]
+
+def XOR(cpu, registerA, registerB):
+    cpu.REG[registerA] ^= cpu.REG[registerB]
+
 def SHL(cpu, registerA, registerB):
     cpu.REG[registerA] <<= cpu.REG[registerB]
     cpu.REG[registerA] &= 0xFF
+
+def SHR(cpu, registerA, registerB):
+    cpu.REG[registerA] >>= cpu.REG[registerB]
+    cpu.REG[registerA] &= 0xFF
+
+# EXTENSION INSTRUCTIONS
+def ADDI(cpu, register, immediate):
+    cpu.REG[register] += immediate
+    cpu.REG[register] &= 0xFF
 
 branchtable = {
     0x11: RET,
@@ -100,8 +126,15 @@ branchtable = {
 
 ALU = {
     0x65: INC,
+    0x69: NOT,
     0xA0: ADD,
     0xA2: MUL,
+    0xA4: MOD,
     0xA7: CMP,
-    0xAC: SHL
+    0xA8: AND,
+    0xAA: OR,
+    0xAB: XOR,
+    0xAC: SHL,
+    0xAD: SHR,
+    0xAE: ADDI
 }
