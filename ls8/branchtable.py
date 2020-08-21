@@ -34,11 +34,17 @@ def CALL(cpu, register):
 def JMP(cpu, register):
     cpu.PC = cpu.REG[register]
 
+def JEQ(cpu, register):
+    cpu.PC = (cpu.PC + 2) * (cpu.FL & 0x01 ^ 0x01) + cpu.REG[register] * (cpu.FL & 0x01)
+
+def JNE(cpu, register):
+    cpu.PC = (cpu.PC + 2) * (cpu.FL & 0x01) + cpu.REG[register] * (cpu.FL & 0x01 ^ 0x01)
+
 def JLT(cpu, register):
     cpu.PC = (cpu.PC + 2) * ((cpu.FL >> 2) & 0x01 ^ 0x01) + cpu.REG[register] * ((cpu.FL >> 2) & 0x01)
 
 def JGT(cpu, register):
-    cpu.PC = cpu.PC + 2 if cpu.FL & 0x02 == 0 else cpu.REG[register]
+    cpu.PC = (cpu.PC + 2) * ((cpu.FL >> 1) & 0x01 ^ 0x01) + cpu.REG[register] * ((cpu.FL >> 1) & 0x01)
 
 def INC(cpu, register):
     cpu.REG[register] += 1
@@ -83,6 +89,8 @@ branchtable = {
     0x48: PRA,
     0x50: CALL,
     0x54: JMP,
+    0x55: JEQ,
+    0x56: JNE,
     0x57: JGT,
     0x58: JLT,
     0x82: LDI,
